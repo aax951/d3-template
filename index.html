@@ -1,14 +1,137 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>D3 Template</title>
-    <meta charset="UTF-8">
-  </head>
-  <body>
-  
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
-       <script>
-         
-       </script>
-  </body>
+
+<head>
+	<title>D3 Template</title>
+	<meta charset="UTF-8">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+</head>
+
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+
+
+</style>
+
+<body>
+
+	<div id="visualization"></div>
+
+	<script>
+		d3.json("htn.json", function(error, data) {
+			callbackError = error;
+			htn = data;
+
+			margin = {
+					top: 80,
+					right: 30,
+					bottom: 30,
+					left: 90
+				}, // ** Highlight var name **
+				width = 900 - margin.left - margin.right // ** Highlight var name **
+			height = 500 - margin.top - margin.bottom // ** Highlight var name **
+
+
+			groupNames = htn.map(function(d) {
+				return d.group;
+			})
+
+
+			variableNames = d3.keys(htn[0]).filter(function(key) {
+				return key !== "group";
+			})
+
+
+
+
+
+
+			htn.forEach(function(d) {
+				d.groupsTotal = variableNames.map(function(name) {
+					return {
+						"variableName": name,
+						"variableCount": d[name]
+					};
+				})
+				d.totalGroup = d3.sum(d.groupsTotal,
+					function(d) {
+						return d.variableCount;
+					});
+			});
+
+
+
+			x = d3.scale.ordinal()
+				.domain(groupNames)
+				.rangeRoundBands([0, width], 0.1)
+
+			y = d3.scale.linear()
+				.domain([0, d3.max(htn, function(d) {
+					return d.totalGroup;
+				})])
+				.range([height, 0])
+
+			color = d3.scale.ordinal()
+				.domain(groupNames)
+				.range(["#d62728", "#2ca02c", "#9467bd"]);
+
+			xAxis = d3.svg.axis()
+				.scale(x)
+				.orient("bottom")
+
+			yAxis = d3.svg.axis()
+				.scale(y)
+				.orient("left")
+
+			svgViewport = d3.select("#visualization")
+				.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+				.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+			svgViewport.append("g")
+				.attr("class", "x axis")
+				.attr("transform", "translate(0," + height + ")")
+				.call(xAxis)
+
+
+
+			svgViewport.append("g")
+				.attr("class", "y axis")
+				.call(yAxis)
+
+
+			layers = variableNames.map(function(variableName) {
+				return htn.map(function(d) {
+					return {
+						"x": x(d.group),
+						"y": d[variableName],
+						"variableName": variableName
+					};
+				});
+			});
+
+
+
+		})
+	</script>
+</body>
+
 </html>
